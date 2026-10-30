@@ -6,6 +6,8 @@
 
 Cloudflare Workers + D1 の小さなJSONセーブ保管APIと管理ページです。セーブはユーザーごとに1件だけ保持し、revisionが大きい書き込みだけを保存します。
 
+[プレイログ画面](https://morn-save-server.pikapikan0526.workers.dev/admin/logs/) では、プロジェクト、ユーザーID、ログを選んでJSONを確認できる。ログ本体は独立した [MornLogServer](https://github.com/TsukumiStudio/MornLogServer) がR2の `morn-play-logs` に保存する。管理画面と管理APIは既存のCloudflare Access認証を通し、R2バケットは公開しない。
+
 管理画面では一覧の時点でスクリーンショットのサムネイルを表示し、更新日時・撮影日時は日本時間（Asia/Tokyo）で表示します。保存JSONとAPIの日時はUTCを維持します。各セーブ行を折りたたみ表示し、展開すると直下にインデント付きの項目を表示します。辞書・配列も個別に展開でき、右端の「JSONで保存」は展開状態を変えずにJSONをダウンロードします。
 
 ## セットアップ

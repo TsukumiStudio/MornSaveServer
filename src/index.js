@@ -1,4 +1,5 @@
 import { checkAccess } from './access.js';
+import { logAdmin } from './log_admin.js';
 
 const MAX_BODY = 256 * 1024;
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -202,8 +203,9 @@ export default {
         if (denied) res = denied;
         else if (method !== 'GET') res = fail(405, 'method_not_allowed');
         else if (url.pathname === '/admin' || url.pathname === '/index.html') res = Response.redirect(new URL('/admin/', url), 302);
-        else if (url.pathname === '/admin/' || url.pathname === '/admin/index.html') {
-          const page = await env.ASSETS.fetch(new Request(new URL('/index.html', url), req));
+        else if (url.pathname === '/admin/' || url.pathname === '/admin/index.html' || url.pathname === '/admin/logs/' || url.pathname === '/admin/logs/app.js' || url.pathname === '/admin/logs/style.css') {
+          const assetPath = url.pathname === '/admin/logs/' ? '/logs.html' : url.pathname === '/admin/logs/app.js' ? '/logs.js' : url.pathname === '/admin/logs/style.css' ? '/logs.css' : '/index.html';
+          const page = await env.ASSETS.fetch(new Request(new URL(assetPath, url), req));
           const headers = new Headers(page.headers);
           headers.set('cache-control', 'no-store');
           res = new Response(page.body, { status: page.status, headers });
@@ -217,7 +219,11 @@ export default {
         res = method === 'OPTIONS' ? new Response(null, { status: 204, headers: cors }) : await writeSave(req, env, url.pathname.slice('/v1/saves/'.length));
         for (const [k, v] of Object.entries(cors)) res.headers.set(k, v);
       } else if (url.pathname === '/v1/admin' || url.pathname.startsWith('/v1/admin/')) {
-        res = await admin(req, env, url);
+        res = url.pathname.startsWith('/v1/admin/logs/')
+          ? (await adminAccess(req, env)) || await logAdmin(req, env, url)
+          : await admin(req, env, url);
+      } else if (['/logs.html', '/logs.js', '/logs.css'].includes(url.pathname)) {
+        res = fail(404, 'not_found');
       } else {
         res = await env.ASSETS.fetch(req);
       }
